@@ -1,0 +1,5 @@
+name: kubernikus
+config:
+  image: controller:latest
+  label: CAPKKS
+  live_reload_deps: ["cmd/main.go", "go.mod", "go.sum", "api", "internal" ]
