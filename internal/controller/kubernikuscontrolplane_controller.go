@@ -23,10 +23,13 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/cluster-api/util"
+	"sigs.k8s.io/cluster-api/util/kubeconfig"
+	"sigs.k8s.io/cluster-api/util/secret"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
+	"time"
 
 	controlplanev1alpha1 "github.com/sapcc/cluster-api-control-plane-provider-kubernikus/api/v1alpha1"
 )
@@ -40,8 +43,8 @@ type KubernikusControlPlaneReconciler struct {
 //+kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=kubernikuscontrolplanes,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=kubernikuscontrolplanes/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=kubernikuscontrolplanes/finalizers,verbs=update
-//+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=clusters,verbs=get;list;watch
-//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
+//+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=clusters,verbs=get;list;watch;update;patch
+//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -71,8 +74,10 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 
 	if len(kcp.GetOwnerReferences()) == 0 {
 		logger.Info("KubernikusControlPlane has no owner reference, skipping")
-		return ctrl.Result{}, nil
+		return ctrl.Result{Requeue: true}, nil
 	}
+
+	// TODO: add finalizer
 
 	cluster, err := util.GetOwnerCluster(ctx, r.Client, kcp.ObjectMeta)
 	if err != nil {
@@ -85,6 +90,9 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	logger.Info("Found owner cluster", "cluster", cluster.Name)
+
+	// check owner cluster
+	// cluster.Status.InfrastructureReady
 
 	var sec v1.Secret
 	err = r.Get(ctx, client.ObjectKey{Namespace: cluster.Namespace, Name: cluster.Name}, &sec)
@@ -102,6 +110,78 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 		return ctrl.Result{}, err
 	}
 
+	// get the latest status from kubernikus
+	status, err := kks.GetKKSStatus(&kcp, logger)
+	if err != nil {
+		logger.Error(err, "Failed to get status")
+		return ctrl.Result{}, err
+	}
+	// update the status of the kcp
+	kcp.Status = *status
+	err = r.Status().Update(ctx, &kcp)
+	if err != nil {
+		logger.Error(err, "Failed to update status")
+		return ctrl.Result{}, err
+	}
+	// set owner cp endpoint if status is ready
+	if status.Ready && cluster.Spec.ControlPlaneEndpoint.Host == "" {
+		ep, err := kks.GetKKSEndpoint(&kcp)
+		if err != nil {
+			logger.Error(err, "Failed to get endpoint")
+			return ctrl.Result{}, err
+		}
+		cluster.Spec.ControlPlaneEndpoint = *ep
+		err = r.Update(ctx, cluster)
+		if err != nil {
+			logger.Error(err, "Failed to update cluster")
+			return ctrl.Result{}, err
+		}
+	}
+	// set necessary secrets and labels according to status
+	if status.Ready {
+		// check if secret is already present
+		kcSecret, err := secret.Get(ctx, r.Client, util.ObjectKey(cluster), secret.Kubeconfig)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				// if not create it
+				logger.Info("Kubeconfig secret not found, creating")
+				kcStr, err := kks.GetKKSKubeconfig(&kcp, logger)
+				if err != nil {
+					logger.Error(err, "Failed to get kubeconfig")
+					return ctrl.Result{}, err
+				}
+				kcSecret = kubeconfig.GenerateSecret(cluster, []byte(kcStr))
+				err = r.Create(ctx, kcSecret)
+				if err != nil {
+					logger.Error(err, "Failed to create kubeconfig secret")
+					return ctrl.Result{}, err
+				}
+			} else {
+				logger.Error(err, "Failed to get kubeconfig secret")
+				return ctrl.Result{}, err
+			}
+		}
+		// if yes - check if it needs rotation
+		rotate, err := kubeconfig.NeedsClientCertRotation(kcSecret, time.Minute*30)
+		if err != nil {
+			logger.Error(err, "Failed to check kubeconfig for rotation")
+			return ctrl.Result{}, err
+		}
+		if rotate {
+			logger.Info("Kubeconfig needs rotation, updating")
+			kcStr, err := kks.GetKKSKubeconfig(&kcp, logger)
+			if err != nil {
+				logger.Error(err, "Failed to get kubeconfig")
+				return ctrl.Result{}, err
+			}
+			kcSecret = kubeconfig.GenerateSecret(cluster, []byte(kcStr))
+			err = r.Update(ctx, kcSecret)
+			if err != nil {
+				logger.Error(err, "Failed to update kubeconfig secret")
+				return ctrl.Result{}, err
+			}
+		}
+	}
 	return ctrl.Result{}, nil
 }
 
@@ -113,10 +193,11 @@ func (r *KubernikusControlPlaneReconciler) SetupWithManager(mgr ctrl.Manager) er
 }
 
 // convertSecret takes a v1.Secret and converts it to a string map for use in the kubernikus client
+// TODO: revisit this and create a proper struct
 func convertSecret(sec *v1.Secret) map[string]string {
-	secret := make(map[string]string)
+	ret := make(map[string]string)
 	for k, v := range sec.Data {
-		secret[k] = strings.TrimSuffix(string(v), "\n")
+		ret[k] = strings.TrimSuffix(string(v), "\n")
 	}
-	return secret
+	return ret
 }

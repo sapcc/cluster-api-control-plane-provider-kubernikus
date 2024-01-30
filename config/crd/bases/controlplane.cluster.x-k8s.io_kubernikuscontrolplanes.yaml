@@ -35,6 +35,19 @@ spec:
           spec:
             description: KubernikusControlPlaneSpec defines the desired state of KubernikusControlPlane
             properties:
+              advertiseAddress:
+                type: string
+              advertisePort:
+                format: int64
+                type: integer
+              dnsAddress:
+                type: string
+              dnsDomain:
+                type: string
+              serviceCidr:
+                type: string
+              sshPublicKey:
+                type: string
               version:
                 type: string
             required:

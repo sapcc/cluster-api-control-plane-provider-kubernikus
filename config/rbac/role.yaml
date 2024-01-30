@@ -11,6 +11,8 @@ rules:
   verbs:
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - controlplane.cluster.x-k8s.io
@@ -43,6 +45,7 @@ rules:
   resources:
   - secrets
   verbs:
+  - create
   - get
   - list
   - watch

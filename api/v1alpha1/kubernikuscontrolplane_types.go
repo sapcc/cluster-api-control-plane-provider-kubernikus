@@ -29,6 +29,16 @@ type KubernikusControlPlaneSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	Version string `json:"version"`
+
+	ServiceCidr string `json:"serviceCidr,omitempty"`
+
+	AdvertiseAddress string `json:"advertiseAddress,omitempty"`
+	AdvertisePort    int64  `json:"advertisePort,omitempty"`
+
+	DnsAddress string `json:"dnsAddress,omitempty"`
+	DnsDomain  string `json:"dnsDomain,omitempty"`
+
+	SSHPublicKey string `json:"sshPublicKey,omitempty"`
 }
 
 // KubernikusControlPlaneStatus defines the observed state of KubernikusControlPlane
