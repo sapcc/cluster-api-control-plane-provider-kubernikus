@@ -21,8 +21,11 @@ import (
 	"github.com/sapcc/cluster-api-control-plane-provider-kubernikus/internal/kubernikus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/cluster-api/util"
+	certs2 "sigs.k8s.io/cluster-api/util/certs"
 	"sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/cluster-api/util/secret"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -150,10 +153,57 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 					logger.Error(err, "Failed to get kubeconfig")
 					return ctrl.Result{}, err
 				}
+				logger.Info("generating kubeconfig secret")
 				kcSecret = kubeconfig.GenerateSecret(cluster, []byte(kcStr))
 				err = r.Create(ctx, kcSecret)
 				if err != nil {
 					logger.Error(err, "Failed to create kubeconfig secret")
+					return ctrl.Result{}, err
+				}
+				logger.Info("loading kubeconfig")
+				authInfo, err := clientcmd.Load([]byte(kcStr))
+				if err != nil {
+					logger.Error(err, "Failed to load kubeconfig")
+					return ctrl.Result{}, err
+				}
+				logger.Info("context", "current", authInfo.Contexts[authInfo.CurrentContext])
+				aIStr := authInfo.Contexts[authInfo.CurrentContext].AuthInfo
+				cCStr := authInfo.Contexts[authInfo.CurrentContext].Cluster
+				saKeyData := authInfo.AuthInfos[aIStr].ClientKeyData
+				saCertData := authInfo.AuthInfos[aIStr].ClientCertificateData
+				saCert := secret.Certificate{
+					Purpose: secret.ServiceAccount,
+					KeyPair: &certs2.KeyPair{
+						Cert: saCertData,
+						Key:  saKeyData,
+					},
+					External:  true,
+					Generated: true,
+				}
+				caCert := secret.Certificate{
+					Purpose: secret.ClusterCA,
+					KeyPair: &certs2.KeyPair{
+						Key:  make([]byte, 0),
+						Cert: authInfo.Clusters[cCStr].CertificateAuthorityData,
+					},
+					External:  true,
+					Generated: true,
+				}
+				certs := secret.Certificates{&saCert, &caCert}
+				gvk := controlplanev1alpha1.GroupVersion.WithKind("KubernikusControlPlane")
+				f := false
+				cRef := metav1.OwnerReference{
+					APIVersion:         controlplanev1alpha1.GroupVersion.String(),
+					Kind:               gvk.Kind,
+					Name:               kcp.Name,
+					UID:                kcp.UID,
+					Controller:         &f,
+					BlockOwnerDeletion: &f,
+				}
+				logger.Info("presavegen", "object", util.ObjectKey(cluster), "cRef", cRef)
+				err = certs.SaveGenerated(ctx, r.Client, util.ObjectKey(cluster), cRef)
+				if err != nil {
+					logger.Error(err, "Failed to create secrets")
 					return ctrl.Result{}, err
 				}
 			} else {
