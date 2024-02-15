@@ -40,6 +40,8 @@ spec:
               advertisePort:
                 format: int64
                 type: integer
+              backup:
+                type: string
               dnsAddress:
                 type: string
               dnsDomain:

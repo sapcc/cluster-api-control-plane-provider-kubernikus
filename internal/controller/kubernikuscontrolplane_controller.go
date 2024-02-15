@@ -166,6 +166,12 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 					logger.Error(err, "Failed to load kubeconfig")
 					return ctrl.Result{}, err
 				}
+				logger.Info("getting ca secret")
+				caSec, err := kks.GetKKSCa(&kcp, logger)
+				if err != nil {
+					logger.Error(err, "Failed to get ca secret")
+					return ctrl.Result{}, err
+				}
 				logger.Info("context", "current", authInfo.Contexts[authInfo.CurrentContext])
 				aIStr := authInfo.Contexts[authInfo.CurrentContext].AuthInfo
 				cCStr := authInfo.Contexts[authInfo.CurrentContext].Cluster
@@ -183,7 +189,7 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 				caCert := secret.Certificate{
 					Purpose: secret.ClusterCA,
 					KeyPair: &certs2.KeyPair{
-						Key:  make([]byte, 0),
+						Key:  []byte(caSec.StringData["tls.key"]),
 						Cert: authInfo.Clusters[cCStr].CertificateAuthorityData,
 					},
 					External:  true,

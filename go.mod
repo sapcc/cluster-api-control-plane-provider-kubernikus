@@ -5,12 +5,13 @@ go 1.21
 toolchain go1.21.6
 
 require (
+	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.3.0
 	github.com/go-openapi/runtime v0.27.1
 	github.com/go-openapi/strfmt v0.22.0
 	github.com/onsi/ginkgo/v2 v2.13.1
 	github.com/onsi/gomega v1.30.0
-	github.com/sapcc/kubernikus v1.0.1-0.20240125172016-902282d84c84
+	github.com/sapcc/kubernikus v1.5.1-0.20240215164028-d50ab911f0db
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.4

@@ -35,6 +35,10 @@ type KubernikusControlPlaneSpec struct {
 	AdvertiseAddress string `json:"advertiseAddress,omitempty"`
 	AdvertisePort    int64  `json:"advertisePort,omitempty"`
 
+	Backup string `json:"backup,omitempty"`
+
+	CustomCNI string `json:"customCNI,omitempty"`
+
 	DnsAddress string `json:"dnsAddress,omitempty"`
 	DnsDomain  string `json:"dnsDomain,omitempty"`
 
