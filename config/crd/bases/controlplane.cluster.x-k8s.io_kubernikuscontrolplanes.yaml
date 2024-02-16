@@ -42,10 +42,14 @@ spec:
                 type: integer
               backup:
                 type: string
+              customCNI:
+                type: boolean
               dnsAddress:
                 type: string
               dnsDomain:
                 type: string
+              seedKubeadm:
+                type: boolean
               serviceCidr:
                 type: string
               sshPublicKey:

@@ -37,10 +37,12 @@ type KubernikusControlPlaneSpec struct {
 
 	Backup string `json:"backup,omitempty"`
 
-	CustomCNI string `json:"customCNI,omitempty"`
+	CustomCNI bool `json:"customCNI,omitempty"`
 
 	DnsAddress string `json:"dnsAddress,omitempty"`
 	DnsDomain  string `json:"dnsDomain,omitempty"`
+
+	SeedKubeadm bool `json:"seedKubeadm,omitempty"`
 
 	SSHPublicKey string `json:"sshPublicKey,omitempty"`
 }

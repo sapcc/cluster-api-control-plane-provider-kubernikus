@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	b64 "encoding/base64"
 	"github.com/sapcc/cluster-api-control-plane-provider-kubernikus/internal/kubernikus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -172,6 +173,11 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 					logger.Error(err, "Failed to get ca secret")
 					return ctrl.Result{}, err
 				}
+				caKey, err := b64.StdEncoding.DecodeString(caSec.StringData["tls.key"])
+				if err != nil {
+					logger.Error(err, "Failed to decode ca cert key")
+					return ctrl.Result{}, err
+				}
 				logger.Info("context", "current", authInfo.Contexts[authInfo.CurrentContext])
 				aIStr := authInfo.Contexts[authInfo.CurrentContext].AuthInfo
 				cCStr := authInfo.Contexts[authInfo.CurrentContext].Cluster
@@ -189,7 +195,7 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 				caCert := secret.Certificate{
 					Purpose: secret.ClusterCA,
 					KeyPair: &certs2.KeyPair{
-						Key:  []byte(caSec.StringData["tls.key"]),
+						Key:  caKey,
 						Cert: authInfo.Clusters[cCStr].CertificateAuthorityData,
 					},
 					External:  true,
@@ -237,6 +243,9 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 				return ctrl.Result{}, err
 			}
 		}
+	} else {
+		logger.Info("cluster not ready yet")
+		return ctrl.Result{Requeue: true}, nil
 	}
 	return ctrl.Result{}, nil
 }

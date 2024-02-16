@@ -100,11 +100,13 @@ func buildKlusterFromControlPlane(cp *v1alpha1.KubernikusControlPlane) *models.K
 	ret := &models.Kluster{
 		Name: cp.Name,
 		Spec: models.KlusterSpec{
-			NoCloud:   true,
-			Version:   cp.Spec.Version,
-			Backup:    "off",
-			Dashboard: &f,
-			Dex:       &f,
+			NoCloud:     true,
+			Version:     cp.Spec.Version,
+			Backup:      "off",
+			CustomCNI:   true,
+			SeedKubeadm: true,
+			Dashboard:   &f,
+			Dex:         &f,
 		},
 	}
 
