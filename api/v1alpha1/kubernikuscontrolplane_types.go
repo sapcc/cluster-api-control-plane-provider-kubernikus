@@ -46,8 +46,7 @@ type KubernikusControlPlaneSpec struct {
 
 	SSHPublicKey string `json:"sshPublicKey,omitempty"`
 
-	OidcIssuerURL string `json:"oidcIssuerURL,omitempty"`
-	OidcClientID  string `json:"oidcClientID,omitempty"`
+	Oidc *OIDC `json:"oidc,omitempty"`
 }
 
 // KubernikusControlPlaneStatus defines the observed state of KubernikusControlPlane
@@ -84,6 +83,13 @@ type KubernikusControlPlaneList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []KubernikusControlPlane `json:"items"`
+}
+
+type OIDC struct {
+	// client ID
+	ClientID string `json:"clientID,omitempty"`
+	// issuer URL
+	IssuerURL string `json:"issuerURL,omitempty"`
 }
 
 func init() {
