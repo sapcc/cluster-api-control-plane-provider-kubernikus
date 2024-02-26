@@ -45,6 +45,9 @@ type KubernikusControlPlaneSpec struct {
 	SeedKubeadm bool `json:"seedKubeadm,omitempty"`
 
 	SSHPublicKey string `json:"sshPublicKey,omitempty"`
+
+	OidcIssuerURL string `json:"oidcIssuerURL,omitempty"`
+	OidcClientID  string `json:"oidcClientID,omitempty"`
 }
 
 // KubernikusControlPlaneStatus defines the observed state of KubernikusControlPlane

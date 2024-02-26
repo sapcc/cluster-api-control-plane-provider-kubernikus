@@ -11,7 +11,7 @@ require (
 	github.com/go-openapi/strfmt v0.22.0
 	github.com/onsi/ginkgo/v2 v2.13.1
 	github.com/onsi/gomega v1.30.0
-	github.com/sapcc/kubernikus v1.5.1-0.20240215164028-d50ab911f0db
+	github.com/sapcc/kubernikus v1.0.1-0.20240222171525-1f09842de880
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.4

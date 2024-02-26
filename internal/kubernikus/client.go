@@ -128,6 +128,12 @@ func buildKlusterFromControlPlane(cp *v1alpha1.KubernikusControlPlane) *models.K
 	if cp.Spec.SSHPublicKey != "" {
 		ret.Spec.SSHPublicKey = cp.Spec.SSHPublicKey
 	}
+	if cp.Spec.OidcIssuerURL != "" {
+		ret.Spec.Oidc.IssuerURL = cp.Spec.OidcIssuerURL
+	}
+	if cp.Spec.OidcClientID != "" {
+		ret.Spec.Oidc.ClientID = cp.Spec.OidcClientID
+	}
 
 	return ret
 }
