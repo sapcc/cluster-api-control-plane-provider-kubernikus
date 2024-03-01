@@ -247,7 +247,7 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 		logger.Info("cluster not ready yet")
 		return ctrl.Result{Requeue: true}, nil
 	}
-	return ctrl.Result{}, nil
+	return ctrl.Result{Requeue: true}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

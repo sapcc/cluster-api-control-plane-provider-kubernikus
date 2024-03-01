@@ -62,6 +62,11 @@ type KubernikusControlPlaneStatus struct {
 
 	Version    string             `json:"version"`
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// ExternalManagedControlPlane indicates to Cluster API that the Control Plane
+	// is externally managed by Kubernikus.
+	// +kubebuilder:default=true
+	ExternalManagedControlPlane *bool `json:"externalManagedControlPlane"`
 }
 
 //+kubebuilder:object:root=true
