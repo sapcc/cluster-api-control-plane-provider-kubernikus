@@ -31,6 +31,7 @@ type KubernikusControlPlaneSpec struct {
 	Version string `json:"version"`
 
 	ServiceCidr string `json:"serviceCidr,omitempty"`
+	ClusterCidr string `json:"clusterCidr,omitempty"`
 
 	AdvertiseAddress string `json:"advertiseAddress,omitempty"`
 	AdvertisePort    int64  `json:"advertisePort,omitempty"`

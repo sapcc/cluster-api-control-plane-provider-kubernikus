@@ -102,7 +102,6 @@ func buildKlusterFromControlPlane(cp *v1alpha1.KubernikusControlPlane) *models.K
 		Spec: models.KlusterSpec{
 			NoCloud:     true,
 			Version:     cp.Spec.Version,
-			Backup:      "off",
 			CustomCNI:   true,
 			SeedKubeadm: true,
 			Dashboard:   &f,
@@ -113,11 +112,17 @@ func buildKlusterFromControlPlane(cp *v1alpha1.KubernikusControlPlane) *models.K
 	if cp.Spec.ServiceCidr != "" {
 		ret.Spec.ServiceCIDR = cp.Spec.ServiceCidr
 	}
+	if cp.Spec.ClusterCidr != "" {
+		ret.Spec.ClusterCIDR = &cp.Spec.ClusterCidr
+	}
 	if cp.Spec.AdvertisePort != 0 {
 		ret.Spec.AdvertisePort = cp.Spec.AdvertisePort
 	}
 	if cp.Spec.AdvertiseAddress != "" {
 		ret.Spec.AdvertiseAddress = cp.Spec.AdvertiseAddress
+	}
+	if cp.Spec.Backup != "" {
+		ret.Spec.Backup = cp.Spec.Backup
 	}
 	if cp.Spec.DnsDomain != "" {
 		ret.Spec.DNSDomain = cp.Spec.DnsDomain
