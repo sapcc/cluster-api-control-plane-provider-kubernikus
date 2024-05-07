@@ -97,6 +97,7 @@ func (c *Client) EnsureControlPlane(cp *v1alpha1.KubernikusControlPlane, logger 
 
 func buildKlusterFromControlPlane(cp *v1alpha1.KubernikusControlPlane) *models.Kluster {
 	f := false
+	audit := "stdout"
 	ret := &models.Kluster{
 		Name: cp.Name,
 		Spec: models.KlusterSpec{
@@ -106,6 +107,7 @@ func buildKlusterFromControlPlane(cp *v1alpha1.KubernikusControlPlane) *models.K
 			SeedKubeadm: true,
 			Dashboard:   &f,
 			Dex:         &f,
+			Audit:       &audit,
 		},
 	}
 

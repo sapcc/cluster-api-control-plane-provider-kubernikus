@@ -47,7 +47,8 @@ type KubernikusControlPlaneSpec struct {
 
 	SSHPublicKey string `json:"sshPublicKey,omitempty"`
 
-	Oidc *OIDC `json:"oidc,omitempty"`
+	Oidc  *OIDC  `json:"oidc,omitempty"`
+	Audit string `json:"audit,omitempty"`
 }
 
 // KubernikusControlPlaneStatus defines the observed state of KubernikusControlPlane
