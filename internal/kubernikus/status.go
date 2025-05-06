@@ -17,7 +17,7 @@ func (c *Client) GetKKSStatus(cp *v1alpha1.KubernikusControlPlane, logger logr.L
 	}
 	for _, kluster := range lco.Payload {
 		if kluster.Name == cp.Name {
-			ret.Version = kluster.Status.Version
+			ret.Version = "v" + kluster.Status.ApiserverVersion
 			ret.Initialized = true
 			if kluster.Status.Phase == models.KlusterPhaseRunning {
 				ret.Ready = true
