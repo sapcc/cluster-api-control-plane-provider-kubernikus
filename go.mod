@@ -12,9 +12,9 @@ require (
 	github.com/onsi/ginkgo/v2 v2.13.1
 	github.com/onsi/gomega v1.30.0
 	github.com/sapcc/kubernikus v1.0.1-0.20240222171525-1f09842de880
-	k8s.io/api v0.28.4
-	k8s.io/apimachinery v0.28.4
-	k8s.io/client-go v0.28.4
+	k8s.io/api v0.33.0
+	k8s.io/apimachinery v0.33.0
+	k8s.io/client-go v0.33.0
 	sigs.k8s.io/cluster-api v1.6.1
 	sigs.k8s.io/controller-runtime v0.16.3
 )
