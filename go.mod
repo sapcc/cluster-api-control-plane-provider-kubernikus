@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-logr/logr v1.4.2
+	github.com/go-logr/logr v1.4.3
 	github.com/go-openapi/runtime v0.28.0
 	github.com/go-openapi/strfmt v0.23.0
 	github.com/onsi/ginkgo/v2 v2.23.4
