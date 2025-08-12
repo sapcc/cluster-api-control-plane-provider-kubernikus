@@ -1,6 +1,8 @@
 package kubernikus
 
 import (
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
@@ -8,7 +10,6 @@ import (
 	kksClient "github.com/sapcc/kubernikus/pkg/api/client"
 	"github.com/sapcc/kubernikus/pkg/api/client/operations"
 	"github.com/sapcc/kubernikus/pkg/api/models"
-	"time"
 )
 
 type Client struct {
@@ -69,8 +70,18 @@ func (c *Client) EnsureControlPlane(cp *v1alpha1.KubernikusControlPlane, logger 
 			}
 			// this only updates the kks kluster if the version changes
 			// TODO: revisit this
+
+			var changed bool
 			if sco.Payload.Spec.Version != cp.Spec.Version {
-				logger.Info("cluster version does not match, updating")
+				changed = true
+				logger.Info("cluster version changed")
+			}
+			if string(sco.Payload.Spec.AuthenticationConfiguration) != cp.Spec.AuthenticationConfiguration {
+				changed = true
+				logger.Info("authentication configuration changed")
+			}
+			if changed {
+				logger.Info("cluster changed, updating")
 				ucp := operations.NewUpdateClusterParams()
 				ucp.Name = cp.Name
 				ucp.Body = buildKlusterFromControlPlane(cp)
@@ -101,13 +112,14 @@ func buildKlusterFromControlPlane(cp *v1alpha1.KubernikusControlPlane) *models.K
 	ret := &models.Kluster{
 		Name: cp.Name,
 		Spec: models.KlusterSpec{
-			NoCloud:     true,
-			Version:     cp.Spec.Version,
-			CustomCNI:   true,
-			SeedKubeadm: true,
-			Dashboard:   &f,
-			Dex:         &f,
-			Audit:       &audit,
+			NoCloud:                     true,
+			Version:                     cp.Spec.Version,
+			CustomCNI:                   true,
+			SeedKubeadm:                 true,
+			Dashboard:                   &f,
+			Dex:                         &f,
+			Audit:                       &audit,
+			AuthenticationConfiguration: models.AuthenticationConfiguration(cp.Spec.AuthenticationConfiguration),
 		},
 	}
 
