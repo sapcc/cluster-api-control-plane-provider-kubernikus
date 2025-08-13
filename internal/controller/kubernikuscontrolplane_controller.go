@@ -1,25 +1,14 @@
-/*
-Copyright 2024.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
 import (
 	"context"
 	b64 "encoding/base64"
-	"github.com/sapcc/cluster-api-control-plane-provider-kubernikus/internal/kubernikus"
+	"strings"
+	"time"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,8 +21,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strings"
-	"time"
+
+	"github.com/sapcc/cluster-api-control-plane-provider-kubernikus/internal/kubernikus"
 
 	controlplanev1alpha1 "github.com/sapcc/cluster-api-control-plane-provider-kubernikus/api/v1alpha1"
 )
@@ -66,7 +55,7 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 
 	var kcp controlplanev1alpha1.KubernikusControlPlane
 
-	err := r.Client.Get(ctx, req.NamespacedName, &kcp)
+	err := r.Get(ctx, req.NamespacedName, &kcp)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("KubernikusControlPlane may be deleted")

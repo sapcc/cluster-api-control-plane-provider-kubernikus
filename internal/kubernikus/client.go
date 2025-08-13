@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company
+// SPDX-License-Identifier: Apache-2.0
+
 package kubernikus
 
 import (
@@ -6,10 +9,11 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
-	"github.com/sapcc/cluster-api-control-plane-provider-kubernikus/api/v1alpha1"
 	kksClient "github.com/sapcc/kubernikus/pkg/api/client"
 	"github.com/sapcc/kubernikus/pkg/api/client/operations"
 	"github.com/sapcc/kubernikus/pkg/api/models"
+
+	"github.com/sapcc/cluster-api-control-plane-provider-kubernikus/api/v1alpha1"
 )
 
 type Client struct {
@@ -85,6 +89,7 @@ func (c *Client) EnsureControlPlane(cp *v1alpha1.KubernikusControlPlane, logger 
 				ucp := operations.NewUpdateClusterParams()
 				ucp.Name = cp.Name
 				ucp.Body = buildKlusterFromControlPlane(cp)
+				//nolint:errcheck
 				_, err := c.kks.Operations.UpdateCluster(ucp, c)
 				if err != nil {
 					logger.Error(err, "failed to update cluster")
