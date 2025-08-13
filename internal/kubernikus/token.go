@@ -1,7 +1,11 @@
+// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company
+// SPDX-License-Identifier: Apache-2.0
+
 package kubernikus
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,9 +22,9 @@ func GetToken(username, password, connectorId, authUrl string) (string, error) {
 			return nil
 		},
 	}
-	req, err := http.NewRequest("GET", authUrl, nil)
+	req, err := http.NewRequest(http.MethodGet, authUrl, http.NoBody)
 	if err != nil {
-		return "", fmt.Errorf("failed to build inital request: %w", err)
+		return "", fmt.Errorf("failed to build initial request: %w", err)
 	}
 	q := url.Values{}
 	q.Set("connector_id", connectorId)
@@ -34,7 +38,7 @@ func GetToken(username, password, connectorId, authUrl string) (string, error) {
 		return "", fmt.Errorf("calling %s failed with %s, maybe because of an incorrect connector_id", resp.Request.URL, resp.Status)
 	}
 	if redirects < 1 {
-		return "", fmt.Errorf("login failed, expected some redirects")
+		return "", errors.New("login failed, expected some redirects")
 	}
 	redirects = 0
 	v := url.Values{}
@@ -50,7 +54,7 @@ func GetToken(username, password, connectorId, authUrl string) (string, error) {
 		return "", fmt.Errorf("calling %s failed with %s", resp2.Request.URL.String(), resp.Status)
 	}
 	if redirects < 1 {
-		return "", fmt.Errorf("login failed, probably because of an incorrect username/password")
+		return "", errors.New("login failed, probably because of an incorrect username/password")
 	}
 	p, err := io.ReadAll(resp2.Body)
 	if err != nil {
@@ -61,7 +65,7 @@ func GetToken(username, password, connectorId, authUrl string) (string, error) {
 		Type    string `json:"type"`
 	}
 	if err := json.Unmarshal(p, &token); err != nil {
-		return "", fmt.Errorf("failed")
+		return "", errors.New("failed")
 	}
 	return token.IDToken, nil
 }

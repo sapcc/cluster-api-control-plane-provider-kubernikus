@@ -1,10 +1,15 @@
+// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company
+// SPDX-License-Identifier: Apache-2.0
+
 package kubernikus
 
 import (
-	"github.com/sapcc/cluster-api-control-plane-provider-kubernikus/api/v1alpha1"
-	"github.com/sapcc/kubernikus/pkg/api/client/operations"
 	"net/url"
+
+	"github.com/sapcc/kubernikus/pkg/api/client/operations"
 	"sigs.k8s.io/cluster-api/api/v1beta1"
+
+	"github.com/sapcc/cluster-api-control-plane-provider-kubernikus/api/v1alpha1"
 )
 
 func (c *Client) GetKKSEndpoint(cp *v1alpha1.KubernikusControlPlane) (*v1beta1.APIEndpoint, error) {

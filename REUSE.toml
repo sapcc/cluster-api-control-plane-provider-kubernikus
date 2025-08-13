@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: SAP SE or an SAP affiliate company
+# SPDX-License-Identifier: Apache-2.0
+version = 1
+SPDX-PackageName = "cluster-api-control-plane-provider-kubernikus"
+SPDX-PackageDownloadLocation = "https://github.com/sapcc/cluster-api-control-plane-provider-kubernikus"
+
+[[annotations]]
+path = [
+  ".github/CODEOWNERS",
+  ".github/renovate.json",
+  ".gitignore",
+  ".license-scan-overrides.jsonl",
+  ".license-scan-rules.json",
+  "go.mod",
+  "go.sum",
+  "Makefile.maker.yaml",
+  "vendor/modules.txt",
+]
+SPDX-FileCopyrightText = "SAP SE or an SAP affiliate company"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "api/v1alpha/zz_generated.deepcopy.go",
+  "PROJECT",
+  "config/**",
+  "hack/**",
+]
+SPDX-FileCopyrightText = "2024 SAP SE or an SAP affiliate company"
+SPDX-License-Identifier = "Apache-2.0"

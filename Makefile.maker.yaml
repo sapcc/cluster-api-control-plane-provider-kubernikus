@@ -1,0 +1,45 @@
+# Configuration file for <https://github.com/sapcc/go-makefile-maker>
+
+metadata:
+  url: https://github.com/sapcc/cluster-api-control-plane-provider-kubernikus
+
+binaries:
+  - name:        cluster-api-control-plane-provider-kubernikus
+    fromPackage: .
+    installTo:   bin/
+
+golang:
+  setGoModVersion: true
+
+golangciLint:
+  createConfig: true
+
+githubWorkflow:
+  ci:
+    enabled: true
+  pushContainerToGhcr:
+    enabled: true
+    platforms: "linux/amd64"
+    tagStrategy:
+      - edge
+      - latest
+      - semver
+      - sha
+
+reuse:
+  annotations:
+    - SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company
+      SPDX-License-Identifier: Apache-2.0
+      paths:
+        - "api/v1alpha/zz_generated.deepcopy.go"
+        - "PROJECT"
+        - "config/**"
+        - "hack/**"
+
+renovate:
+  enabled: true
+  assignees:
+    - SchwarzM
+    - Nuckal777
+    - goerangudat
+    - defo89

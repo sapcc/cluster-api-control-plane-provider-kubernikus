@@ -1,11 +1,15 @@
+// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company
+// SPDX-License-Identifier: Apache-2.0
+
 package kubernikus
 
 import (
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
-	"github.com/sapcc/cluster-api-control-plane-provider-kubernikus/api/v1alpha1"
 	"github.com/sapcc/kubernikus/pkg/api/client/operations"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/sapcc/cluster-api-control-plane-provider-kubernikus/api/v1alpha1"
 )
 
 func (c *Client) GetKKSCa(cp *v1alpha1.KubernikusControlPlane, logger logr.Logger) (corev1.Secret, error) {
