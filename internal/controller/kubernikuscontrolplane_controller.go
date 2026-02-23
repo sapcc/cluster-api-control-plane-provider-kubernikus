@@ -33,6 +33,8 @@ type KubernikusControlPlaneReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+var periodicReconciliationResult = ctrl.Result{RequeueAfter: 10 * time.Minute}
+
 //+kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=kubernikuscontrolplanes,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=kubernikuscontrolplanes/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=kubernikuscontrolplanes/finalizers,verbs=update
@@ -59,7 +61,7 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("KubernikusControlPlane may be deleted")
-			return ctrl.Result{}, nil
+			return periodicReconciliationResult, nil
 		}
 		logger.Error(err, "Failed to get KubernikusControlPlane")
 		return ctrl.Result{}, err
@@ -76,7 +78,7 @@ func (r *KubernikusControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Error(err, "Failed to get owner cluster, stopping reconciliation")
-			return ctrl.Result{}, nil
+			return periodicReconciliationResult, nil
 		}
 		logger.Error(err, "Failed to get owner cluster")
 		return ctrl.Result{}, err
