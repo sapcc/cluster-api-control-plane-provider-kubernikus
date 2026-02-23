@@ -6,6 +6,15 @@
 # SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company
 # SPDX-License-Identifier: Apache-2.0
 
+# macOS ships with make 3.81 from 2006, which does not support all the features that we want (e.g. --warn-undefined-variables)
+ifeq ($(MAKE_VERSION),3.81)
+  ifeq (,$(shell which gmake 2>/dev/null))
+    $(error We do not support this "make" version ($(MAKE_VERSION)) which is two decades old. Please install a newer version, e.g. using "brew install make")
+  else
+    $(error We do not support this "make" version ($(MAKE_VERSION)) which is two decades old. You have a newer GNU make installed, so please run "gmake" instead)
+  endif
+endif
+
 MAKEFLAGS=--warn-undefined-variables
 # /bin/sh is dash on Debian which does not support all features of ash/bash
 # to fix that we use /bin/bash only on Debian to not break Alpine
@@ -30,11 +39,11 @@ install-goimports: FORCE
 install-golangci-lint: FORCE
 	@if ! hash golangci-lint 2>/dev/null; then printf "\e[1;36m>> Installing golangci-lint (this may take a while)...\e[0m\n"; go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest; fi
 
-install-modernize: FORCE
-	@if ! hash modernize 2>/dev/null; then printf "\e[1;36m>> Installing modernize (this may take a while)...\e[0m\n"; go install golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest; fi
-
 install-shellcheck: FORCE
-	@if ! hash shellcheck 2>/dev/null; then printf "\e[1;36m>> Installing shellcheck...\e[0m\n"; SHELLCHECK_ARCH=$(shell uname -m); SHELLCHECK_OS=$(shell uname -s | tr '[:upper:]' '[:lower:]'); if [[ "$$SHELLCHECK_OS" == "darwin" ]]; then SHELLCHECK_OS=macos; fi; SHELLCHECK_VERSION="stable"; if command -v curl >/dev/null 2>&1; then GET="curl -sLo-"; elif command -v wget >/dev/null 2>&1; then GET="wget -O-"; else echo "Didn't find curl or wget to download shellcheck"; exit 2; fi; $$GET "https://github.com/koalaman/shellcheck/releases/download/$$SHELLCHECK_VERSION/shellcheck-$$SHELLCHECK_VERSION.$$SHELLCHECK_OS.$$SHELLCHECK_ARCH.tar.xz" | tar -Jxf -; BIN=$$(go env GOBIN); if [[ -z $$BIN ]]; then BIN=$$(go env GOPATH)/bin; fi; install -Dm755 shellcheck-$$SHELLCHECK_VERSION/shellcheck -t "$$BIN"; rm -rf shellcheck-$$SHELLCHECK_VERSION; fi
+	@set -eou pipefail;  if ! hash shellcheck 2>/dev/null; then printf "\e[1;36m>> Installing shellcheck...\e[0m\n"; SHELLCHECK_ARCH=$$(uname -m); if [[ "$$SHELLCHECK_ARCH" == "arm64" ]]; then SHELLCHECK_ARCH=aarch64; fi; SHELLCHECK_OS=$$(uname -s | tr '[:upper:]' '[:lower:]'); SHELLCHECK_VERSION="stable"; if command -v curl >/dev/null 2>&1; then GET="curl -sLo-"; elif command -v wget >/dev/null 2>&1; then GET="wget -O-"; else echo "Didn't find curl or wget to download shellcheck"; exit 2; fi; $$GET "https://github.com/koalaman/shellcheck/releases/download/$$SHELLCHECK_VERSION/shellcheck-$$SHELLCHECK_VERSION.$$SHELLCHECK_OS.$$SHELLCHECK_ARCH.tar.xz" | tar -Jxf -; BIN=$$(go env GOBIN); if [[ -z $$BIN ]]; then BIN=$$(go env GOPATH)/bin; fi; install -Dm755 shellcheck-$$SHELLCHECK_VERSION/shellcheck -t "$$BIN"; rm -rf shellcheck-$$SHELLCHECK_VERSION; fi
+
+install-typos: FORCE
+	@set -eou pipefail;  if ! hash typos 2>/dev/null; then printf "\e[1;36m>> Installing typos...\e[0m\n"; TYPOS_ARCH=$$(uname -m); if [[ "$$TYPOS_ARCH" == "arm64" ]]; then TYPOS_ARCH=aarch64; fi; if command -v curl >/dev/null 2>&1; then GET="curl $${GITHUB_TOKEN:+" -u \":$$GITHUB_TOKEN\""} -sLo-"; elif command -v wget >/dev/null 2>&1; then GET="wget $${GITHUB_TOKEN:+" --password \"$$GITHUB_TOKEN\""} -O-"; else echo "Didn't find curl or wget to download typos"; exit 2; fi; if command -v gh >/dev/null; then TYPOS_GET_RELEASE_JSON="gh api /repos/crate-ci/typos/releases"; else TYPOS_GET_RELEASE_JSON="$$GET https://api.github.com/repos/crate-ci/typos/releases"; fi; TYPOS_VERSION=$$($$TYPOS_GET_RELEASE_JSON | jq -r '.[0].name' ); if [[ $(UNAME_S) == Darwin ]]; then TYPOS_FILE="typos-$$TYPOS_VERSION-$$TYPOS_ARCH-apple-darwin.tar.gz"; elif [[ $(UNAME_S) == Linux ]]; then TYPOS_FILE="typos-$$TYPOS_VERSION-$$TYPOS_ARCH-unknown-linux-musl.tar.gz"; fi; mkdir -p typos; $$GET ""https://github.com/crate-ci/typos/releases/download/$$TYPOS_VERSION/$$TYPOS_FILE"" | tar -C typos -zxf -; BIN=$$(go env GOBIN); if [[ -z $$BIN ]]; then BIN=$$(go env GOPATH)/bin; fi; install -Dm755 typos/typos -t "$$BIN"; rm -rf typos/; fi
 
 install-go-licence-detector: FORCE
 	@if ! hash go-licence-detector 2>/dev/null; then printf "\e[1;36m>> Installing go-licence-detector (this may take a while)...\e[0m\n"; go install go.elastic.co/go-licence-detector@latest; fi
@@ -43,9 +52,9 @@ install-addlicense: FORCE
 	@if ! hash addlicense 2>/dev/null; then printf "\e[1;36m>> Installing addlicense (this may take a while)...\e[0m\n"; go install github.com/google/addlicense@latest; fi
 
 install-reuse: FORCE
-	@if ! hash reuse 2>/dev/null; then if ! hash pip3 2>/dev/null; then printf "\e[1;31m>> Cannot install reuse because no pip3 was found. Either install it using your package manager or install pip3\e[0m\n"; else printf "\e[1;36m>> Installing reuse...\e[0m\n"; pip3 install --user reuse; fi; fi
+	@if ! hash reuse 2>/dev/null; then if ! hash pipx 2>/dev/null; then printf "\e[1;31m>> You are required to manually intervene to install reuse as go-makefile-maker cannot automatically resolve installing reuse on all setups.\e[0m\n"; printf "\e[1;31m>> The preferred way for go-makefile-maker to install python tools after nix-shell is pipx which could not be found. Either install pipx using your package manager or install reuse using your package manager if at least version 6 is available.\e[0m\n"; printf "\e[1;31m>> As your Python was likely installed by your package manager, just doing pip install --user sadly does no longer work as pip issues a warning about breaking your system. Generally running --break-system-packages with --user is safe to do but you should only run this command if you can resolve issues with it yourself: pip3 install --user --break-system-packages reuse\e[0m\n"; else printf "\e[1;36m>> Installing reuse...\e[0m\n"; pipx install reuse; fi; fi
 
-prepare-static-check: FORCE install-golangci-lint install-modernize install-shellcheck install-go-licence-detector install-addlicense install-reuse
+prepare-static-check: FORCE install-goimports install-golangci-lint install-shellcheck install-typos install-go-licence-detector install-addlicense install-reuse
 
 install-controller-gen: FORCE
 	@if ! hash controller-gen 2>/dev/null; then printf "\e[1;36m>> Installing controller-gen (this may take a while)...\e[0m\n"; go install sigs.k8s.io/controller-tools/cmd/controller-gen@latest; fi
@@ -53,10 +62,13 @@ install-controller-gen: FORCE
 install-setup-envtest: FORCE
 	@if ! hash setup-envtest 2>/dev/null; then printf "\e[1;36m>> Installing setup-envtest (this may take a while)...\e[0m\n"; go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest; fi
 
-GO_BUILDFLAGS =
-GO_LDFLAGS =
-GO_TESTENV =
-GO_BUILDENV =
+# To add additional flags or values (before the default ones), specify the variable in the environment, e.g. `GO_BUILDFLAGS='-tags experimental' make`.
+# To override the default flags or values, specify the variable on the command line, e.g. `make GO_BUILDFLAGS='-tags experimental'`.
+GO_BUILDFLAGS +=
+GO_LDFLAGS +=
+GO_TESTFLAGS +=
+GO_TESTENV +=
+GO_BUILDENV +=
 
 build-all: build/cluster-api-control-plane-provider-kubernikus
 
@@ -64,7 +76,7 @@ build/cluster-api-control-plane-provider-kubernikus: FORCE generate
 	env $(GO_BUILDENV) go build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -o build/cluster-api-control-plane-provider-kubernikus .
 
 DESTDIR =
-ifeq ($(shell uname -s),Darwin)
+ifeq ($(UNAME_S),Darwin)
 	PREFIX = /usr/local
 else
 	PREFIX = /usr
@@ -93,24 +105,25 @@ generate: install-controller-gen
 	@printf "\e[1;36m>> controller-gen\e[0m\n"
 	@controller-gen crd rbac:roleName=cluster-api-control-plane-provider-kubernikus webhook paths="./..." output:crd:artifacts:config=crd
 	@controller-gen object paths="./..."
+	@controller-gen applyconfiguration paths="./..."
 
 run-golangci-lint: FORCE install-golangci-lint
 	@printf "\e[1;36m>> golangci-lint\e[0m\n"
 	@golangci-lint config verify
 	@golangci-lint run
 
-run-modernize: FORCE install-modernize
-	@printf "\e[1;36m>> modernize\e[0m\n"
-	@modernize $(GO_TESTPKGS)
-
 run-shellcheck: FORCE install-shellcheck
 	@printf "\e[1;36m>> shellcheck\e[0m\n"
 	@find .  -type f \( -name '*.bash' -o -name '*.ksh' -o -name '*.zsh' -o -name '*.sh' -o -name '*.shlib' \) -exec shellcheck  {} +
 
+run-typos: FORCE install-typos
+	@printf "\e[1;36m>> typos\e[0m\n"
+	@typos
+
 build/cover.out: FORCE generate install-setup-envtest | build
 	@printf "\e[1;36m>> Running tests\e[0m\n"
-	KUBEBUILDER_ASSETS=$$(setup-envtest use 1.33 -p path) go run github.com/onsi/ginkgo/v2/ginkgo run --randomize-all -output-dir=build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTPKGS)
-	@mv build/coverprofile.out build/cover.out
+	KUBEBUILDER_ASSETS=$$(setup-envtest use 1.33 -p path) go run github.com/onsi/ginkgo/v2/ginkgo run --randomize-all -output-dir=build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTFLAGS) $(GO_TESTPKGS)
+	@awk < build/coverprofile.out '$$1 != "mode:" { is_filename[$$1] = true; counts1[$$1]+=$$2; counts2[$$1]+=$$3 } END { for (filename in is_filename) { printf "%s %d %d\n", filename, counts1[filename], counts2[filename]; } }' | sort | $(SED) '1s/^/mode: count\n/' > $@
 
 build/cover.html: build/cover.out
 	@printf "\e[1;36m>> go tool cover > build/cover.html\e[0m\n"
@@ -126,7 +139,7 @@ check-reuse: FORCE install-reuse
 
 check-license-headers: FORCE check-addlicense check-reuse
 
-__static-check: FORCE run-shellcheck run-golangci-lint run-modernize check-dependency-licenses check-license-headers
+__static-check: FORCE run-shellcheck run-golangci-lint check-dependency-licenses check-license-headers
 
 static-check: FORCE
 	@$(MAKE) --keep-going --no-print-directory __static-check
@@ -155,10 +168,6 @@ goimports: FORCE install-goimports
 	@printf "\e[1;36m>> goimports -w -local https://github.com/sapcc/cluster-api-control-plane-provider-kubernikus\e[0m\n"
 	@goimports -w -local github.com/sapcc/cluster-api-control-plane-provider-kubernikus $(patsubst $(shell awk '$$1 == "module" {print $$2}' go.mod)%,.%/*.go,$(shell go list ./...))
 
-modernize: FORCE install-modernize
-	@printf "\e[1;36m>> modernize -fix ./...\e[0m\n"
-	@modernize -fix ./...
-
 clean: FORCE
 	git clean -dxf build
 
@@ -168,8 +177,10 @@ vars: FORCE
 	@printf "GO_BUILDFLAGS=$(GO_BUILDFLAGS)\n"
 	@printf "GO_COVERPKGS=$(GO_COVERPKGS)\n"
 	@printf "GO_LDFLAGS=$(GO_LDFLAGS)\n"
+	@printf "GO_TESTFLAGS=$(GO_TESTFLAGS)\n"
 	@printf "GO_TESTPKGS=$(GO_TESTPKGS)\n"
 	@printf "MAKE=$(MAKE)\n"
+	@printf "MAKE_VERSION=$(MAKE_VERSION)\n"
 	@printf "PREFIX=$(PREFIX)\n"
 	@printf "SED=$(SED)\n"
 	@printf "UNAME_S=$(UNAME_S)\n"
@@ -186,8 +197,8 @@ help: FORCE
 	@printf "\e[1mPrepare\e[0m\n"
 	@printf "  \e[36minstall-goimports\e[0m                                    Install goimports required by goimports/static-check\n"
 	@printf "  \e[36minstall-golangci-lint\e[0m                                Install golangci-lint required by run-golangci-lint/static-check\n"
-	@printf "  \e[36minstall-modernize\e[0m                                    Install modernize required by run-modernize/static-check\n"
 	@printf "  \e[36minstall-shellcheck\e[0m                                   Install shellcheck required by run-shellcheck/static-check\n"
+	@printf "  \e[36minstall-typos\e[0m                                        Install typos required by run-typos/static-check\n"
 	@printf "  \e[36minstall-go-licence-detector\e[0m                          Install-go-licence-detector required by check-dependency-licenses/static-check\n"
 	@printf "  \e[36minstall-addlicense\e[0m                                   Install addlicense required by check-license-headers/license-headers/static-check\n"
 	@printf "  \e[36minstall-reuse\e[0m                                        Install reuse required by license-headers/check-reuse\n"
@@ -204,8 +215,8 @@ help: FORCE
 	@printf "  \e[36mcheck\e[0m                                                Run the test suite (unit tests and golangci-lint).\n"
 	@printf "  \e[36mgenerate\e[0m                                             Generate code for Kubernetes CRDs and deepcopy.\n"
 	@printf "  \e[36mrun-golangci-lint\e[0m                                    Install and run golangci-lint. Installing is used in CI, but you should probably install golangci-lint using your package manager.\n"
-	@printf "  \e[36mrun-modernize\e[0m                                        Install and run modernize. Installing is used in CI, but you should probably install modernize using your package manager.\n"
 	@printf "  \e[36mrun-shellcheck\e[0m                                       Install and run shellcheck. Installing is used in CI, but you should probably install shellcheck using your package manager.\n"
+	@printf "  \e[36mrun-typos\e[0m                                            Check for spelling errors using typos.\n"
 	@printf "  \e[36mbuild/cover.out\e[0m                                      Run tests and generate coverage report.\n"
 	@printf "  \e[36mbuild/cover.html\e[0m                                     Generate an HTML file with source code annotations from the coverage report.\n"
 	@printf "  \e[36mcheck-addlicense\e[0m                                     Check license headers in all non-vendored .go files with addlicense.\n"
@@ -218,7 +229,6 @@ help: FORCE
 	@printf "  \e[36mlicense-headers\e[0m                                      Add (or overwrite) license headers on all non-vendored source code files.\n"
 	@printf "  \e[36mcheck-dependency-licenses\e[0m                            Check all dependency licenses using go-licence-detector.\n"
 	@printf "  \e[36mgoimports\e[0m                                            Run goimports on all non-vendored .go files\n"
-	@printf "  \e[36mmodernize\e[0m                                            Run modernize on all non-vendored .go files\n"
 	@printf "  \e[36mclean\e[0m                                                Run git clean.\n"
 
 .PHONY: FORCE
