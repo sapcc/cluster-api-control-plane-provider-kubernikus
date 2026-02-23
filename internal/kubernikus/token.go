@@ -29,7 +29,7 @@ func GetToken(username, password, connectorId, authUrl string) (string, error) {
 	q := url.Values{}
 	q.Set("connector_id", connectorId)
 	req.URL.RawQuery = q.Encode()
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) //nolint:gosec // authURL is set from kube secrets
 	if err != nil {
 		return "", fmt.Errorf("failed to call %s: %w", authUrl, err)
 	}
