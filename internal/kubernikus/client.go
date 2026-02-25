@@ -17,38 +17,38 @@ import (
 )
 
 type Client struct {
-	Host        string
-	Token       string
-	Username    string
-	Password    string
-	ConnectorId string
-	AuthUrl     string
-	TokenTime   time.Time
+	host        string
+	token       string
+	username    string
+	password    string
+	connectorID string
+	authURL     string
+	tokenTime   time.Time
 	kks         *kksClient.Kubernikus
 }
 
 func NewClient(host, username, password, connectorId, authUrl string) *Client {
 	return &Client{
-		Host:        host,
-		Username:    username,
-		Password:    password,
-		ConnectorId: connectorId,
-		AuthUrl:     authUrl,
+		host:        host,
+		username:    username,
+		password:    password,
+		connectorID: connectorId,
+		authURL:     authUrl,
 		kks:         kksClient.NewHTTPClientWithConfig(nil, kksClient.DefaultTransportConfig().WithHost(host)),
 	}
 }
 
 func (c *Client) AuthenticateRequest(req runtime.ClientRequest, reg strfmt.Registry) error {
 	var err error
-	if time.Since(c.TokenTime) > 30*time.Minute {
-		c.Token, err = GetToken(c.Username, c.Password, c.ConnectorId, c.AuthUrl)
+	if time.Since(c.tokenTime) > 30*time.Minute {
+		c.token, err = GetToken(c.username, c.password, c.connectorID, c.authURL)
 		if err != nil {
 			return err
 		}
-		c.TokenTime = time.Now()
+		c.tokenTime = time.Now()
 	}
 
-	err = req.SetHeaderParam("Authorization", "Bearer "+c.Token)
+	err = req.SetHeaderParam("Authorization", "Bearer "+c.token)
 	if err != nil {
 		return err
 	}
