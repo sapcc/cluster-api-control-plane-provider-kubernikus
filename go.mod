@@ -5,16 +5,16 @@ go 1.25
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.4.3
-	github.com/go-openapi/runtime v0.28.0
-	github.com/go-openapi/strfmt v0.23.0
-	github.com/onsi/ginkgo/v2 v2.23.4
-	github.com/onsi/gomega v1.38.0
+	github.com/go-openapi/runtime v0.29.2
+	github.com/go-openapi/strfmt v0.25.0
+	github.com/onsi/ginkgo/v2 v2.28.1
+	github.com/onsi/gomega v1.39.1
 	github.com/sapcc/kubernikus v1.0.1-0.20250731130919-ba31cf88de9b
-	k8s.io/api v0.33.3
-	k8s.io/apimachinery v0.33.3
-	k8s.io/client-go v0.33.3
-	sigs.k8s.io/cluster-api v1.10.4
-	sigs.k8s.io/controller-runtime v0.21.0
+	k8s.io/api v0.33.9
+	k8s.io/apimachinery v0.33.9
+	k8s.io/client-go v0.33.9
+	sigs.k8s.io/cluster-api v1.12.3
+	sigs.k8s.io/controller-runtime v0.23.1
 )
 
 require (
