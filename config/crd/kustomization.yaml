@@ -5,8 +5,11 @@ resources:
 - bases/controlplane.cluster.x-k8s.io_kubernikuscontrolplanes.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
-commonLabels:
-  cluster.x-k8s.io/v1beta1: v1alpha1
+labels:
+  - includeSelectors: true
+    includeTemplates: true
+    pairs:
+      cluster.x-k8s.io/v1beta1: v1alpha1
 
 patches:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
