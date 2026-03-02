@@ -13,8 +13,8 @@ metadata:
 spec:
   ports:
   - name: https
-    port: 8000
+    port: 8443
     protocol: TCP
-    targetPort: 8000
+    targetPort: 8443
   selector:
     control-plane: controller-manager
