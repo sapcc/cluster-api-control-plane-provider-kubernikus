@@ -57,7 +57,7 @@ install-reuse: FORCE
 prepare-static-check: FORCE install-goimports install-golangci-lint install-shellcheck install-typos install-go-licence-detector install-addlicense install-reuse
 
 install-controller-gen: FORCE
-	@if ! hash controller-gen 2>/dev/null; then printf "\e[1;36m>> Installing controller-gen (this may take a while)...\e[0m\n"; go install sigs.k8s.io/controller-tools/cmd/controller-gen@latest; fi
+	@if ! hash controller-gen 2>/dev/null; then printf "\e[1;36m>> Installing controller-gen (this may take a while)...\e[0m\n"; go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.20.1; fi
 
 install-setup-envtest: FORCE
 	@if ! hash setup-envtest 2>/dev/null; then printf "\e[1;36m>> Installing setup-envtest (this may take a while)...\e[0m\n"; go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest; fi
