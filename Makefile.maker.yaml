@@ -5,7 +5,7 @@ metadata:
 
 binaries:
   - name:        cluster-api-control-plane-provider-kubernikus
-    fromPackage: .
+    fromPackage: ./cmd
     installTo:   bin/
 
 golang:

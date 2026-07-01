@@ -73,7 +73,7 @@ GO_BUILDENV +=
 build-all: build/cluster-api-control-plane-provider-kubernikus
 
 build/cluster-api-control-plane-provider-kubernikus: FORCE generate
-	env $(GO_BUILDENV) go build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -o build/cluster-api-control-plane-provider-kubernikus .
+	env $(GO_BUILDENV) go build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -o build/cluster-api-control-plane-provider-kubernikus ./cmd
 
 DESTDIR =
 ifeq ($(UNAME_S),Darwin)
