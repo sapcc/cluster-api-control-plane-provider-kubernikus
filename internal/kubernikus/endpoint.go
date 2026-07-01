@@ -7,13 +7,13 @@ import (
 	"net/url"
 
 	"github.com/sapcc/kubernikus/pkg/api/client/operations"
-	"sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/sapcc/cluster-api-control-plane-provider-kubernikus/api/v1alpha1"
 )
 
-func (c *Client) GetKKSEndpoint(cp *v1alpha1.KubernikusControlPlane) (*v1beta1.APIEndpoint, error) {
-	ret := v1beta1.APIEndpoint{}
+func (c *Client) GetKKSEndpoint(cp *v1alpha1.KubernikusControlPlane) (*clusterv1.APIEndpoint, error) {
+	ret := clusterv1.APIEndpoint{}
 	scp := operations.ShowClusterParams{Name: cp.Name}
 	sco, err := c.kks.Operations.ShowCluster(&scp, c)
 	if err != nil {
