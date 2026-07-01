@@ -16,7 +16,7 @@ golangciLint:
 
 githubWorkflow:
   global:
-    goVersion: 1.25.7
+    goVersion: 1.26.4
   ci:
     enabled: true
   pushContainerToGhcr:

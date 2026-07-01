@@ -3,8 +3,8 @@
   "extends": [
     "config:recommended",
     "default:pinDigestsDisabled",
-    "mergeConfidence:all-badges",
-    "docker:disable"
+    "docker:pinDigests",
+    "mergeConfidence:all-badges"
   ],
   "assignees": [
     "SchwarzM",
@@ -14,7 +14,7 @@
   ],
   "commitMessageAction": "Renovate: Update",
   "constraints": {
-    "go": "1.25"
+    "go": "1.26"
   },
   "dependencyDashboardOSVVulnerabilitySummary": "all",
   "osvVulnerabilityAlerts": true,
@@ -60,6 +60,15 @@
         "major"
       ],
       "dependencyDashboardApproval": true
+    },
+    {
+      "matchFileNames": [
+        ".github/workflows/checks.yaml",
+        ".github/workflows/ci.yaml",
+        ".github/workflows/codeql.yaml",
+        ".github/workflows/container-registry-ghcr.yaml"
+      ],
+      "enabled": false
     },
     {
       "matchPackageNames": [
