@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	capiv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -32,7 +32,9 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(capiv1beta1.AddToScheme(scheme))
+	// Cluster API v1beta2 is the current stable contract; the API server handles
+	// conversion from v1beta1 storage on read, so we only need to register v1beta2.
+	utilruntime.Must(capiv1beta2.AddToScheme(scheme))
 
 	utilruntime.Must(controlplanev1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme

@@ -65,15 +65,15 @@ install-setup-envtest: FORCE
 # To add additional flags or values (before the default ones), specify the variable in the environment, e.g. `GO_BUILDFLAGS='-tags experimental' make`.
 # To override the default flags or values, specify the variable on the command line, e.g. `make GO_BUILDFLAGS='-tags experimental'`.
 GO_BUILDFLAGS +=
-GO_LDFLAGS +=
-GO_TESTFLAGS +=
-GO_TESTENV +=
-GO_BUILDENV +=
+GO_LDFLAGS    +=
+GO_TESTFLAGS  +=
+GO_TESTENV    +=
+GO_BUILDENV   +=
 
 build-all: build/cluster-api-control-plane-provider-kubernikus
 
 build/cluster-api-control-plane-provider-kubernikus: FORCE generate
-	env $(GO_BUILDENV) go build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -o build/cluster-api-control-plane-provider-kubernikus .
+	env $(GO_BUILDENV) go build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -o build/cluster-api-control-plane-provider-kubernikus ./cmd
 
 DESTDIR =
 ifeq ($(UNAME_S),Darwin)
@@ -97,13 +97,14 @@ GO_COVERPKGS := $(shell go list ./...)
 null :=
 space := $(null) $(null)
 comma := ,
+YEAR ?= $(shell date +%Y)
 
 check: FORCE static-check build/cover.html build-all
 	@printf "\e[1;32m>> All checks successful.\e[0m\n"
 
 generate: install-controller-gen
 	@printf "\e[1;36m>> controller-gen\e[0m\n"
-	@controller-gen crd rbac:roleName=cluster-api-control-plane-provider-kubernikus webhook paths="./..." output:crd:artifacts:config=crd
+	@controller-gen crd rbac:roleName=cluster-api-control-plane-provider-kubernikus webhook paths="./..." output:crd:artifacts:config=crd output:rbac:artifacts:config=config/rbac
 	@controller-gen object paths="./..."
 	@controller-gen applyconfiguration paths="./..."
 
@@ -122,7 +123,7 @@ run-typos: FORCE install-typos
 
 build/cover.out: FORCE generate install-setup-envtest | build
 	@printf "\e[1;36m>> Running tests\e[0m\n"
-	KUBEBUILDER_ASSETS=$$(setup-envtest use 1.33 -p path) go run github.com/onsi/ginkgo/v2/ginkgo run --randomize-all -output-dir=build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTFLAGS) $(GO_TESTPKGS)
+	KUBEBUILDER_ASSETS=$$(setup-envtest use 1.35 -p path) go run github.com/onsi/ginkgo/v2/ginkgo run --randomize-all -output-dir=build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTFLAGS) $(GO_TESTPKGS)
 	@awk < build/coverprofile.out '$$1 != "mode:" { is_filename[$$1] = true; counts1[$$1]+=$$2; counts2[$$1]+=$$3 } END { for (filename in is_filename) { printf "%s %d %d\n", filename, counts1[filename], counts2[filename]; } }' | sort | $(SED) '1s/^/mode: count\n/' > $@
 
 build/cover.html: build/cover.out
@@ -155,7 +156,7 @@ license-headers: FORCE install-addlicense install-reuse
 	@printf "\e[1;36m>> addlicense (for license headers on source code files)\e[0m\n"
 	@printf "%s\0" $(patsubst $(shell awk '$$1 == "module" {print $$2}' go.mod)%,.%/*.go,$(shell go list ./...)) | $(XARGS) -0 -I{} bash -c 'year="$$(grep 'Copyright' {} | head -n1 | grep -E -o '"'"'[0-9]{4}(-[0-9]{4})?'"'"')"; if [[ -z "$$year" ]]; then year=$$(date +%Y); fi; gawk -i inplace '"'"'{if (display) {print} else {!/^\/\*/ && !/^\*/}}; {if (!display && $$0 ~ /^(package |$$)/) {display=1} else { }}'"'"' {}; addlicense -c "SAP SE or an SAP affiliate company" -s=only -y "$$year" -- {}; $(SED) -i '"'"'1s+// Copyright +// SPDX-FileCopyrightText: +'"'"' {}; '
 	@printf "\e[1;36m>> reuse annotate (for license headers on other files)\e[0m\n"
-	@reuse lint -j | jq -r '.non_compliant.missing_licensing_info[]' | grep -vw vendor | $(XARGS) reuse annotate -c 'SAP SE or an SAP affiliate company' -l Apache-2.0 --skip-unrecognised
+	@reuse lint -j | jq -r '.non_compliant.missing_licensing_info[]' | sed '/\<vendor\>/d' | $(XARGS) reuse annotate -c 'SAP SE or an SAP affiliate company' -l Apache-2.0 --skip-unrecognised
 	@printf "\e[1;36m>> reuse download --all\e[0m\n"
 	@reuse download --all
 	@printf "\e[1;35mPlease review the changes. If *.license files were generated, consider instructing go-makefile-maker to add overrides to REUSE.toml instead.\e[0m\n"
